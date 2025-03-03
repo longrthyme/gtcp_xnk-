@@ -46,7 +46,7 @@
     }  
 
 ?>
-<?php if($products->count()): ?>
+<!-- <?php if($products->count()): ?>
 <div class="block-product py-4">
     <div class="container">
         
@@ -72,4 +72,40 @@
         <?php endif; ?>
     </div>
 </div>
-<?php endif; ?><?php /**PATH /home/long/Downloads/GTCPLATFORM-main/resources/views/shortcode/product.blade.php ENDPATH**/ ?>
+<?php endif; ?> -->
+
+<?php if($products->count()): ?>
+<div class="block-product py-4">
+    <div class="container">
+        <div class="section-title">
+            <h4 class="text-uppercase">
+                <?php echo e(!empty($title) && $title != '' ? $title : $category->name ?? ''); ?>
+
+            </h4>
+            <div class="d-flex align-items-center ms-md-3">
+                <i class="fa-solid fa-arrow-right-long"></i>
+                <a href="/dang-tin" class="btn btn-custom ms-md-3">Đăng tin ngay!</a>
+            </div>
+            <a class="view-more" href="<?php echo e($url); ?>">Xem tất cả <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+
+        <?php if(\View::exists($templattePath_view)): ?>
+            <div class="list-cate-slider">
+                <div class="archive-slider d-flex owl-carousel" style="opacity: 0">
+                <?php if(\View::exists($templattePath_view)): ?>
+
+            <?php $__currentLoopData = $products; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <div class="ms-2">
+                    <?php echo $__env->make($templattePath_view, \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+                </div>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+            
+            <?php endif; ?>
+            
+        <?php else: ?>
+            <?php if ($__env->exists($templatePath_2, compact('products', 'category_folder'))) echo $__env->make($templatePath_2, compact('products', 'category_folder'), \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+        <?php endif; ?>
+    </div>
+</div>
+<?php endif; ?>
+<?php /**PATH /home/long/Downloads/GTCPLATFORM-main/resources/views/shortcode/product.blade.php ENDPATH**/ ?>
