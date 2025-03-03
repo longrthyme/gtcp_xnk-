@@ -1,0 +1,12 @@
+{
+    "name": "ProductReview module",
+    "image": "images/review.png",
+    "auth": "Lanh Le",
+    "email": "lanhktc@gmail.com",
+    "link": "http://Your-link.com",
+    "configGroup": "Plugins",
+    "configCode": "Cms",
+    "configKey": "ProductReview",
+    "version": "3.5",
+    "scartVersion": []
+}

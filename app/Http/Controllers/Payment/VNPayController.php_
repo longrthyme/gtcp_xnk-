@@ -1,0 +1,204 @@
+<?php
+
+namespace App\Http\Controllers\Payment;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+
+use App\Services\VNPayService;
+use App\Models\PaymentRequest;
+use App\Models\VNPayLog;
+use App\Product;
+
+class VNPayController extends Controller
+{
+    use \App\Traits\LocalizeController;
+    protected $vnpay;
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->vnpay = new VNPayService;
+    }
+
+    public function paymentReturn()
+    {
+        $this->localized();
+        $this->data['user'] = auth()->user();
+        $this->data['title'] = 'Thanh toán đơn hàng';
+        $this->data['seo'] = [
+            'seo_title' => 'Thanh toán đơn hàng'
+        ];
+        $inputData = array();
+        $response = request()->all();
+        $this->data['response'] = $response;
+        foreach ($response as $key => $value) {
+            if (substr($key, 0, 4) == "vnp_") {
+                $inputData[$key] = $value;
+            }
+        }
+        $vnp_SecureHash = $inputData['vnp_SecureHash'];
+
+        $getSecureHash = $this->vnpay->getSecureHash($inputData);
+        $secureHash = $getSecureHash['vnpSecureHash'];
+
+        $payment_id = $response['vnp_TxnRef'];
+        $payment = PaymentRequest::where('id', $payment_id)->where('status', 1)->first();
+        
+        if($payment && $secureHash == $vnp_SecureHash)
+        {
+            // $this->data['cart'] = \App\Model\Addtocard::find($payment->cart_id);
+            $this->data['payment'] = $payment;
+            $this->data['product'] = (new Product)->getDetail($payment->package_id);
+            $payment_status = $response['vnp_TransactionStatus'] == '00' ? 'GD Thành công' : 'GD không thành công';
+            
+            if ($response['vnp_TransactionStatus'] == '00') {
+                if(!empty($payment->cart_id) && $payment->send_mail == 0)
+                {
+                    // sc_mail_cart_success($payment->cart_id); //send mail 
+                    PaymentRequest::where('id', $payment_id)->update([
+                        'send_mail' => 1
+                    ]);
+                }
+
+                // TODO: xử lý kết quả và hiển thị.
+                return view($this->templatePath .'.purchase.success', $this->data);
+                
+            } else {
+                return view($this->templatePath .'.purchase.reject', $this->data);
+            }
+        }
+        else {
+            $this->data['payment'] = PaymentRequest::find($payment_id);
+            $this->data['message'] = 'Invalid signature';
+            // dd($response);
+            return view($this->templatePath .'.purchase.payment_error', $this->data);
+        }
+    }
+
+    public function payment_ipn()
+    {
+        $this->localized();
+
+        try {
+            $inputData = array();
+            $returnData = array();
+            $vnp_HashSecret = env('VNPAY_HashSecret');
+
+            $data = request()->all();
+
+            if(count($data))
+            {
+                foreach ($data as $key => $value) {
+                    if (substr($key, 0, 4) == "vnp_") {
+                        $inputData[$key] = $value;
+                    }
+                }
+
+                $getSecureHash = $this->vnpay->getSecureHash($inputData);
+                $secureHash = $getSecureHash['vnpSecureHash'];
+
+                $this->data['payment'] = $data;
+                $payment_status = $data['vnp_ResponseCode'] == '00' ? 'GD Thành công' : 'GD không thành công';
+                $amount = $data['vnp_Amount'] ? $data['vnp_Amount'] / 100 : 0;
+
+                $payment_data = PaymentRequest::find($data['vnp_TxnRef']);
+                
+                if($payment_data){
+                    $vnp_SecureHash = $inputData['vnp_SecureHash'];
+                    unset($inputData['vnp_SecureHashType']);
+                    unset($inputData['vnp_SecureHash']);
+                    ksort($inputData);
+
+                    $i = 0;
+                    $hashData = "";
+                    foreach ($inputData as $key => $value) {
+                        if ($i == 1) {
+                            $hashData = $hashData . '&' . urlencode($key) . "=" . urlencode($value);
+                        } else {
+                            $hashData = $hashData . urlencode($key) . "=" . urlencode($value);
+                            $i = 1;
+                        }
+                    }
+
+                    if ($secureHash == $vnp_SecureHash)
+                    {
+                        if($payment_data->amount == $inputData['vnp_Amount']/100)
+                        {
+                            if ($payment_data->status != '' && $payment_data->status == 0) 
+                            {
+                                if ($inputData['vnp_ResponseCode'] == '00') 
+                                {
+                                    // Log::info('Payment vnp_ResponseCode: '.$inputData['vnp_ResponseCode']);
+                                    $Status = 1; // Trạng thái thanh toán thành công
+                                    
+                                    /*\App\Model\Addtocard::find($payment_data->cart_id)->update([
+                                        'cart_payment' => 1 // cho xac nhan
+                                    ]);*/
+                                } else {
+                                    // Log::info('Payment vnp_ResponseCode 1: '.$inputData['vnp_ResponseCode']);
+                                    $Status = 2; // Trạng thái thanh toán thất bại / lỗi
+                                }
+
+                                //Cài đặt Code cập nhật kết quả thanh toán, tình trạng đơn hàng vào DB
+                                $data_db = [
+                                    'transaction_no' => $data['vnp_TransactionNo'] ?? '',
+                                    'content' => $data['vnp_OrderInfo'] ?? '',
+                                    'status' => $Status,
+                                    'payment_success' => $Status,
+                                    'payment_status' => $payment_status,
+                                    'bank_code' => $data['vnp_BankCode'] ?? ''
+                                ];
+                                
+                                $db_update = PaymentRequest::find($payment_data->id)->update($data_db);
+
+                                //Trả kết quả về cho VNPAY: Website/APP TMĐT ghi nhận yêu cầu thành công   
+                                $returnData['RspCode'] = '00';
+                                $returnData['Message'] = 'Confirm Success';
+                            }
+                            else {
+                                $returnData['RspCode'] = '02';
+                                $returnData['Message'] = 'Order already confirmed';
+                            }
+                        }
+                        else {
+                            $returnData['RspCode'] = '04';
+                            $returnData['Message'] = 'invalid amount';
+                        }
+
+                    }
+                    else {
+                        $returnData['RspCode'] = '97';
+                        $returnData['Message'] = 'Invalid signature';
+                    }
+                }
+                else {
+                    $returnData['RspCode'] = '01';
+                    $returnData['Message'] = 'Order not found';
+                }
+            }
+
+        } catch (Exception $e) {
+            $returnData['RspCode'] = '99';
+            $returnData['Message'] = 'Unknow error';
+        }
+        //log merchant
+        $data_log = [
+            'response_code'    => $returnData['RspCode']??'',
+            'message'    => $returnData['Message']??'',
+            'ip'    => request()->ip(),
+            'data'  => json_encode($data, JSON_UNESCAPED_UNICODE)
+        ];
+        Log::info('Payment error: '.$returnData['RspCode']);
+        // Log::debug('log merchant: '. json_encode($data_log, JSON_UNESCAPED_UNICODE));
+        VNPayLog::create($data_log);
+        
+        // echo json_encode($returnData); die;
+
+        return response()->json($returnData);
+
+    }
+
+    
+}

@@ -1,0 +1,47 @@
+
+<div class="shop-sidebar">
+    @includeIf($templatePath .'.product.filter-option',['id' => 30])
+    <div class="menu-nav">
+        <div class="goods-origin" data-bs-toggle="collapse" href="#multiCollapseExample2" role="button" aria-expanded="true" aria-controls="multiCollapseExample2">
+            <div class="name-origin text-uppercase">Nơi đi </div>
+            <i class="fa fa-angle-down"></i>
+        </div>
+        <div class="list-filter-item collapse multi-collapse show" id="multiCollapseExample2">
+            @foreach($countries as $index => $item)
+                @if($index<8)
+                    <div class="item-check">
+                        <a href="javascript:;" data-name="country" class="item-radius filter-set {{ request('country') == $item->name ? 'active' : '' }}">{{ $item->name_vi!= '' ? $item->name_vi :$item->name }}</a>
+                    </div>
+                @endif
+            @endforeach
+        </div>
+    </div>
+    <div class="menu-nav">
+        <div class="place-delivery" data-bs-toggle="collapse" href="#multiCollapseExample3" role="button" aria-expanded="true" aria-controls="multiCollapseExample3">
+            <div class="name-delivery text-uppercase">Nơi đến</div>
+            <i class="fa fa-angle-down"></i>
+        </div>
+        <div class="list-filter-item collapse multi-collapse show" id="multiCollapseExample3">
+            @foreach($countries as $index => $item)
+                @if($index<8)
+                <div class="item-check">
+                    <a href="javascript:;" data-name="destination" class="item-radius filter-set {{ request('destination') == $item->name ? 'active' : '' }}">{{ $item->name_vi!=''?$item->name_vi:$item->name }}</a>
+                </div>
+                @endif
+            @endforeach
+        </div>
+    </div>
+    <div class="menu-nav">
+        <div class="place-delivery" data-bs-toggle="collapse" href="#multiCollapseExample3" role="button" aria-expanded="true" aria-controls="multiCollapseExample3">
+            <div class="name-delivery text-uppercase">Thời gian dự kiến bốc hàng</div>
+            <i class="fa fa-angle-down"></i>
+        </div>
+        <div class="collapse multi-collapse show" id="multiCollapseExample3">
+            <div class="optionItem">
+                 <div class="input-group date">
+                    <input type="text" class="form-control input-value datepicker option-change" data-name="option" value="" placeholder="dd/mm/yyyy">
+                 </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,19 @@
+@if($categories)
+@php
+    $category_id = $category_id??0;
+@endphp
+<div class="nav-scroll">
+    <ul class="nav nav-pills nav-product-tabs" id="pills-tab" role="tablist">
+        @foreach($categories as $index => $item)
+	        @php
+			    $menu_active = '';
+			    if ($category_id == $item->id)
+			       $menu_active = ' active';
+			@endphp
+        <li class="nav-item">
+            <a class="nav-link {{ $menu_active }}" href="{{ $item->getUrl($category->slug) }}"><span>{{ $item->name }}</span></a>
+        </li>
+        @endforeach
+    </ul>
+</div>
+@endif

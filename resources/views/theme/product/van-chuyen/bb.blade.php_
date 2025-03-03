@@ -1,0 +1,46 @@
+
+<div class="table-responsive text-center">
+    <table class="table table-bordered mb-0 tablefilter">
+        <thead class="table-light align-middle ">
+            <tr>
+                <th class="nosort">Phương thức vận chuyển</th>
+                <th class="nosort">Nơi đi/ nơi đến</th>
+                <th class="nosort">Lịch khởi hành</th>
+                <th class="nosort">Thời gian vận chuyển</th>
+                <th class="nosort">Tổng cước vận chuyển</th>
+                <th class="nosort">Hiệu lực giá</th>
+                <th class="nosort">Lựa chọn báo giá</th>
+            </tr>
+        </thead>
+        <tbody class="align-middle">
+            @foreach($products as $index => $product)
+            @php
+                $options = $product->getOptions();
+                //dd($options);
+                $product_categories = $product->getCategories();
+                if(count($product_categories))
+                {
+                    $category_end = end($product_categories);
+                    $category_end = $modelCategory->getDetail($category_end['id']);
+                }
+            @endphp
+            <tr>
+                <td>{{ !empty($category_end) ? $category_end->name : '' }}</td>
+                <td>{{ current($product->getAddressFull()) }} -> {{ current($product->getAddressEnd()) }}</td>
+                <td>{{ $options[35]??'' }}</td>
+                <td>{{ $options[36]??'' }}</td>
+                <td>
+                    @if(!empty($options[39]))
+                        {!! render_price($options[39]??0) !!}
+                    @else
+                        {!! render_price($product->price??0) !!}
+                    @endif
+                </td>
+                <td>{{ $product->getDateAvailable() }}</td>
+
+                <td><a href="{{ $product->getUrl() }}" class="btn btn-contacts">Liên hệ ngay >> </a></td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+</div>

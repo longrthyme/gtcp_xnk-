@@ -1,0 +1,115 @@
+@extends($templatePath.'.layout')
+
+@section('seo')
+@endsection
+
+@section('content')
+    @php
+        $client_category = $modelClientCategory->getDetail(1);
+        $clients = $modelClient->setCategory($client_category->id)->getList([]);
+        $post_type = request('post_type')??'sell';
+    @endphp
+    {{--
+    <div class="page-archive py-5">
+        <div class="container text-center py-5">
+            <h3 class="text-white">{{ $seo_title }}</h3>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb justify-content-center mb-0">
+                    <li class="breadcrumb-item"><a class="text-white" href="/">Trang chủ</a></li>
+                    <li class="breadcrumb-item text-white active" aria-current="page">{{ $category->name }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    --}}
+
+    <div class="container text-center">
+        {!! htmlspecialchars_decode($category->content) !!}
+    </div>
+
+    <div class="block-archive">
+        <div class="container my-lg-4 my-3">
+            <div class='page-content'>
+                <div class="page-wrapper">
+                    @if($client_category)
+                    <div class="nav-scroll mb-3">
+                        <ul class="nav nav-pills nav-product-tabs" id="pills-tab" role="tablist">
+                            @foreach($clients as $index => $item)
+                                @php
+                                    $menu_active = '';
+                                    if ($post_type == $item->slug)
+                                       $menu_active = ' active';
+                                @endphp
+                                <li class="nav-item">
+                                    <a class="nav-link {{ $menu_active }}" href="{{ $category->getUrl().'?post_type='. $item->slug }}"><span>{{ $item->name }}</span></a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    
+                    <div class="tab-content">
+                        
+                            @php
+                                $products = $modelProduct->setCategory($category_id)->getList([
+                                    'post_type' => $post_type,
+                                    'keyword'    => request('keyword')??'',
+                                    'country'    => request('country')??'',
+                                ]);
+                            @endphp
+                                <div class="row">
+                                    <div class="col-md-9 mx-auto">
+                                        <div class="block-search">
+                                            <div class="search-feature">
+                                                <form action="{{ $url_action_filter }}" class="form-inline form-search" id="form-search">
+                                                    <input type="hidden" name="url_current" value="{{ url()->current() }}">
+                                                    <input type="hidden" name="post_type" value="{{ $post_type }}">
+                                                    <input type="hidden" name="type_get" value="ajax">
+                                                    <input type="hidden" name="category_parent" value="{{ $category_id }}">
+                                                    <div class="input-search input-w-auto icon">
+                                                        <i class="fa-solid fa-magnifying-glass"></i>
+                                                        <input type="search" name="keyword" class="form-control" value="{{ request('keyword') }}" placeholder="Tìm kiếm theo tiêu đề, từ khóa..." />
+                                                    </div>
+                                                    <div class="input-search input-search-small">
+                                                        <select name="country" class="select2">
+                                                            <option value="">Xuất xứ hàng hóa</option>
+                                                            @foreach($countries as $item)
+                                                                <option value="{{ $item->name }}" {{ request('country') == $item->name ? 'selected' : ''  }}>{{ $item->name }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <div class="input-search input-search-small">
+                                                        <select name="place_sale" class="select2">
+                                                            <option value="">Nơi bán</option>
+                                                            @foreach($countries as $item)
+                                                                <option value="{{ $item->name }}" {{ request('place_sale') == $item->name ? 'selected' : ''  }}>{{ $item->name }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <input type="submit" value="TÌM KIẾM" class="productSearch-btn">
+                                                </form>
+                                            </div>
+                                        </div>
+
+                                        <div class="product-list">
+                                            @include($templatePath .'.product.product_list')
+                                        </div>    
+                                    </div>
+                                    <div class="col-md-3">
+                                        @include($templatePath .'.product.sidebar')
+                                    </div>
+                           
+                    </div>
+                    @endif
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @include('shortcode.keyword', ['menu'=>"Keyword-hot"])
+    @include('shortcode.contact')
+@endsection
+
+@push('scripts')
+    <script type="text/javascript" src="{{ asset('js/product.js?ver='. $templateVer) }}"></script>
+@endpush

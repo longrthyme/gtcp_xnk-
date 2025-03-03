@@ -1,0 +1,27 @@
+User-agent: *
+Allow: /
+Disallow: /php/
+Disallow: /system/
+Disallow: /smartoptimizer/
+Disallow: /wp/
+Disallow: /admin/
+
+User-agent: Googlebot
+Allow: /
+Disallow: /admin/
+
+User-agent: Mediapartners-Google*
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Adsbot-Google
+Allow: /
+
+User-agent: Googlebot-Mobile
+Allow: /
+Disallow: /admin/
+
+Sitemap: https://gtcplatform.com/sitemap.xml
+
