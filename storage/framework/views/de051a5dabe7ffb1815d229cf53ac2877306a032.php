@@ -4,6 +4,7 @@
 ?>
 
 <div class="block-service">
+    <div class="img_bg"></div>
     <div class="container">
         <div class="freight-services">
             <?php $__currentLoopData = $category_child; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>

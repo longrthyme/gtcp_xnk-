@@ -4,6 +4,7 @@
 @endphp
 
 <div class="block-service">
+    <div class="img_bg"></div>
     <div class="container">
         <div class="freight-services">
             @foreach($category_child as $item)
